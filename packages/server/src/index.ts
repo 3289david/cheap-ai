@@ -10,9 +10,10 @@ import fs from 'fs';
 import pty from 'node-pty';
 import { v4 as uuid } from 'uuid';
 import { fileURLToPath } from 'url';
+import os from 'os';
 
-import { getDb } from './db.js';
-import { runAgentWithProvider, getDefaultProvider, getProviderById, buildSystemPrompt } from './services/ai.js';
+import { getDb, getSetting } from './db.js';
+import { runAgentWithProvider, getDefaultProvider, getProviderById, buildSystemPrompt, getProviders } from './services/ai.js';
 import { executeToolServer } from './tools.js';
 import { requireAuth, optionalAuth, socketAuth } from './middleware/auth.js';
 import { aiRateLimit } from './middleware/rateLimit.js';
@@ -63,9 +64,8 @@ app.get('/api/health', (req, res) => {
 });
 
 app.get('/api/info', optionalAuth, (req, res) => {
-  const { getSetting } = require('./db.js') as typeof import('./db.js');
-  const { getProviders } = require('./services/ai.js') as typeof import('./services/ai.js');
   const providers = getProviders();
+  const localIP = getLocalIP();
   res.json({
     version: '0.1.0',
     siteName: getSetting('site_name', 'cheap-ai'),
@@ -74,6 +74,8 @@ app.get('/api/info', optionalAuth, (req, res) => {
     providers: providers.map(p => ({ id: p.id, name: p.name, type: p.type, models: JSON.parse(p.models || '[]') })),
     registrationEnabled: getSetting('registration_enabled', 'true') === 'true',
     requireInvite: getSetting('require_invite', 'false') === 'true',
+    networkUrl: `http://${localIP}:${PORT}`,
+    localUrl: `http://localhost:${PORT}`,
   });
 });
 
@@ -261,7 +263,20 @@ io.on('connection', (socket) => {
 const PORT = parseInt(process.env.PORT || '3000');
 const HOST = process.env.HOST || '0.0.0.0';
 
+function getLocalIP(): string {
+  const ifaces = os.networkInterfaces();
+  for (const iface of Object.values(ifaces)) {
+    for (const addr of (iface || [])) {
+      if (addr.family === 'IPv4' && !addr.internal) return addr.address;
+    }
+  }
+  return 'localhost';
+}
+
 httpServer.listen(PORT, HOST, () => {
-  console.log(`\n  cheap-ai server at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
-  console.log(`  Projects: ${PROJECTS_DIR}`);
+  const localIP = getLocalIP();
+  console.log(`\n  cheap-ai server`);
+  console.log(`  Local:    http://localhost:${PORT}`);
+  console.log(`  Network:  http://${localIP}:${PORT}`);
+  console.log(`  Projects: ${PROJECTS_DIR}\n`);
 });

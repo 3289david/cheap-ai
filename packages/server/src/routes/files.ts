@@ -81,7 +81,7 @@ router.put('/:projectId/content', (req, res) => {
   fs.mkdirSync(path.dirname(abs), { recursive: true });
   fs.writeFileSync(abs, content, 'utf-8');
 
-  getDb().prepare('UPDATE projects SET updated_at = datetime("now") WHERE id = ?').run(req.params.projectId);
+  getDb().prepare("UPDATE projects SET updated_at = datetime('now') WHERE id = ?").run(req.params.projectId);
 
   res.json({ ok: true });
 });

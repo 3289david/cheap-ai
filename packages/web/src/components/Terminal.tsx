@@ -24,30 +24,42 @@ export default function TerminalPanel() {
 
   const project = projects.find(p => p.id === activeProjectId);
   const socket = getSocket(apiUrl);
+  // Use a ref so socket event handlers always see the latest tabs without re-registering
+  const tabsRef = useRef<TermTab[]>([]);
+  tabsRef.current = tabs;
 
   useEffect(() => {
-    socket.on('terminal:created', ({ termId }: { termId: string }) => {
-      setTabs(prev => prev.map(t => t.termId === null ? { ...t, termId } : t));
-    });
+    const onCreated = ({ termId }: { termId: string }) => {
+      setTabs(prev => {
+        // assign termId to the first pending tab (termId === null)
+        const pendingIdx = prev.findIndex(t => t.termId === null);
+        if (pendingIdx === -1) return prev;
+        const next = [...prev];
+        next[pendingIdx] = { ...next[pendingIdx], termId };
+        return next;
+      });
+    };
 
-    socket.on('terminal:data', ({ termId, data }: { termId: string; data: string }) => {
-      const tab = tabs.find(t => t.termId === termId);
+    const onData = ({ termId, data }: { termId: string; data: string }) => {
+      const tab = tabsRef.current.find(t => t.termId === termId);
       tab?.xterm.write(data);
-    });
+    };
 
-    socket.on('terminal:exit', ({ termId }: { termId: string }) => {
-      const tab = tabs.find(t => t.termId === termId);
-      if (tab) {
-        tab.xterm.write('\r\n\x1b[31m[Process exited]\x1b[0m\r\n');
-      }
-    });
+    const onExit = ({ termId }: { termId: string }) => {
+      const tab = tabsRef.current.find(t => t.termId === termId);
+      if (tab) tab.xterm.write('\r\n\x1b[31m[Process exited]\x1b[0m\r\n');
+    };
+
+    socket.on('terminal:created', onCreated);
+    socket.on('terminal:data', onData);
+    socket.on('terminal:exit', onExit);
 
     return () => {
-      socket.off('terminal:created');
-      socket.off('terminal:data');
-      socket.off('terminal:exit');
+      socket.off('terminal:created', onCreated);
+      socket.off('terminal:data', onData);
+      socket.off('terminal:exit', onExit);
     };
-  }, [socket, tabs]);
+  }, [socket]); // only re-register when socket instance changes
 
   useEffect(() => {
     if (tabs.length === 0) {

@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cheap-ai — AI coding agent on your server</title>
+  <meta name="description" content="CLI-first AI coding agent with browser IDE. Self-hosted on your VPS. BYOK. Team support. Open source." />
+  <meta property="og:title" content="cheap-ai — AI coding agent on your server" />
+  <meta property="og:description" content="CLI-first AI coding agent with browser IDE. Self-hosted. Open source." />
+  <meta property="og:type" content="website" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --muted: #7d8590;
+      --text: #e6edf3;
+      --blue: #58a6ff;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* Nav */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 56px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(13,17,23,0.92);
+      backdrop-filter: blur(8px);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+    .nav-links { display: flex; align-items: center; gap: 20px; }
+    .nav-links a { font-size: 14px; color: var(--muted); transition: color .15s; }
+    .nav-links a:hover { color: var(--text); }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; border: none; }
+    .btn-primary { background: var(--blue); color: #0d1117; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn:hover { opacity: 0.85; }
+
+    /* Sections */
+    section { padding: 80px 24px; }
+    .container { max-width: 960px; margin: 0 auto; }
+    .container-wide { max-width: 1100px; margin: 0 auto; }
+
+    /* Hero */
+    .hero { padding-top: 140px; padding-bottom: 80px; text-align: center; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 4px 12px; border-radius: 99px;
+      border: 1px solid var(--border);
+      font-size: 12px; color: var(--muted); margin-bottom: 28px;
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    h1 { font-size: clamp(36px, 6vw, 56px); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 20px; }
+    h1 span { color: var(--blue); }
+    .hero-sub { font-size: 18px; color: var(--muted); max-width: 560px; margin: 0 auto 36px; line-height: 1.7; }
+    .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
+
+    /* Terminal demo */
+    .terminal {
+      max-width: 780px; margin: 0 auto;
+      border-radius: 12px; border: 1px solid var(--border);
+      background: var(--surface); overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+      text-align: left;
+    }
+    .terminal-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-r { background: var(--red); }
+    .dot-y { background: var(--yellow); }
+    .dot-g { background: var(--green); }
+    .terminal-label { font-size: 12px; color: var(--muted); margin-left: 6px; font-family: var(--mono); }
+    .terminal-body { padding: 20px 24px; font-family: var(--mono); font-size: 13px; line-height: 1.8; color: var(--muted); overflow-x: auto; white-space: pre; }
+    .tc { color: var(--text); }
+    .tb { color: var(--blue); }
+    .tg { color: var(--green); }
+    .tm { color: var(--muted); }
+
+    /* Section headers */
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
+    h2 { font-size: clamp(24px, 4vw, 36px); font-weight: 700; margin-bottom: 12px; }
+    .section-sub { color: var(--muted); font-size: 16px; margin-bottom: 48px; }
+
+    /* Feature grid */
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .feature-card {
+      padding: 20px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--surface);
+    }
+    .feature-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: rgba(88,166,255,.1); color: var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .feature-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .feature-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* Split section */
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+    @media (max-width: 700px) { .split { grid-template-columns: 1fr; gap: 32px; } }
+    .split-text h2 { margin-bottom: 16px; }
+    .split-text p { color: var(--muted); margin-bottom: 24px; line-height: 1.7; }
+    .check-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .check-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .check-list li svg { color: var(--green); flex-shrink: 0; }
+
+    /* Provider mockup */
+    .provider-card {
+      border-radius: 12px; border: 1px solid var(--border); background: var(--surface); padding: 20px;
+    }
+    .provider-label { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-bottom: 16px; }
+    .provider-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; font-family: var(--mono);
+    }
+    .provider-row:last-child { border-bottom: none; }
+    .provider-name { color: var(--text); }
+    .provider-type { font-size: 11px; color: var(--muted); }
+    .tag { padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+    .tag-blue { background: rgba(88,166,255,.15); color: var(--blue); }
+    .tag-green { background: rgba(63,185,80,.15); color: var(--green); }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .stat { background: var(--surface); padding: 28px 24px; text-align: center; }
+    .stat-number { font-size: 36px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
+    .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* Install strip */
+    .install-strip {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px 24px; font-family: var(--mono); font-size: 14px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .install-strip code { color: var(--blue); }
+    .copy-btn {
+      display: flex; align-items: center; gap: 6px; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); font-size: 12px; padding: 5px 12px; border-radius: 6px; cursor: pointer;
+      font-family: var(--font); transition: color .15s, border-color .15s;
+    }
+    .copy-btn:hover { color: var(--text); border-color: var(--muted); }
+
+    /* CTA section */
+    .cta-section { text-align: center; }
+    .cta-section h2 { margin-bottom: 16px; }
+    .cta-section p { color: var(--muted); margin-bottom: 36px; }
+    .cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* Team cards */
+    .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+    .team-card { border-radius: 12px; border: 1px solid var(--border); background: var(--surface); padding: 20px; }
+    .team-card-icon { color: var(--blue); margin-bottom: 12px; }
+    .team-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .team-card p { font-size: 14px; color: var(--muted); }
+
+    /* How it works */
+    .steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0; }
+    .step { padding: 28px; border: 1px solid var(--border); background: var(--surface); position: relative; }
+    .step:first-child { border-radius: 12px 0 0 12px; }
+    .step:last-child { border-radius: 0 12px 12px 0; }
+    .step:not(:first-child) { border-left: none; }
+    @media (max-width: 700px) {
+      .steps { grid-template-columns: 1fr; }
+      .step:first-child { border-radius: 12px 12px 0 0; }
+      .step:last-child { border-radius: 0 0 12px 12px; }
+      .step:not(:first-child) { border-left: 1px solid var(--border); border-top: none; }
+    }
+    .step-num { font-size: 12px; font-weight: 700; color: var(--blue); margin-bottom: 12px; font-family: var(--mono); }
+    .step h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .step p { font-size: 13px; color: var(--muted); }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border); padding: 32px 24px;
+    }
+    .footer-inner { max-width: 960px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 14px; color: var(--muted); transition: color .15s; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy { font-size: 13px; color: var(--muted); }
+
+    /* Divider */
+    hr { border: none; border-top: 1px solid var(--border); }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 16px; }
+      .nav-links .hide-sm { display: none; }
+      section { padding: 60px 16px; }
+      h1 { font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-brand">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+    cheap-ai
+  </div>
+  <div class="nav-links">
+    <a href="https://github.com/3289david/cheap-ai" target="_blank" rel="noopener" class="hide-sm" style="display:flex;align-items:center;gap:6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+      GitHub
+    </a>
+    <a href="#features">Features</a>
+    <a href="https://github.com/3289david/cheap-ai#readme" target="_blank" rel="noopener">Docs</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="badge">
+      <div class="badge-dot"></div>
+      Open source &amp; self-hosted
+    </div>
+
+    <h1>AI coding agent that<br/>runs <span>on your server</span></h1>
+
+    <p class="hero-sub">
+      CLI-first. Browser IDE. Your code never leaves your VPS.
+      One API key shared by your whole team. Full admin control.
+    </p>
+
+    <div class="hero-cta">
+      <a href="https://github.com/3289david/cheap-ai#quick-start" target="_blank" rel="noopener" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+        Get started
+      </a>
+      <a href="https://github.com/3289david/cheap-ai" target="_blank" rel="noopener" class="btn btn-ghost">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+
+    <!-- Terminal demo -->
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+        <span class="terminal-label">bash — cheap</span>
+      </div>
+      <div class="terminal-body"><span class="tm">$</span> <span class="tc">cheap</span>
+<span class="tg"> cheap-ai v0.1.0</span><span class="tm">  |  project: my-api  |  model: claude-sonnet-4-5</span>
+
+<span class="tm">  You </span><span class="tc">›</span> add JWT authentication to the Express app
+
+<span class="tm">  AI  </span><span class="tc">›</span> <span class="tm">Reading src/index.ts</span>
+        <span class="tm">Reading src/routes/users.ts</span>
+        <span class="tm">Writing src/middleware/auth.ts</span>
+        <span class="tm">Writing src/routes/auth.ts</span>
+        <span class="tm">Editing src/index.ts</span>
+
+        <span class="tc">Done. JWT auth added:
+        POST /auth/register — create account
+        POST /auth/login    — get token
+        GET  /me            — protected route
+
+        Run: npm install jsonwebtoken bcryptjs</span>
+
+<span class="tm">  You </span><span class="tc">›</span> /memory
+
+<span class="tb">  Project Memory (3 entries):</span>
+  <span class="tm">[architecture]</span> <span class="tc">Express + TypeScript REST API on port 3001</span>
+  <span class="tm">[feature]     </span> <span class="tc">JWT auth via HS256, 30-day token expiry</span>
+  <span class="tm">[preference]  </span> <span class="tc">Middleware in src/middleware/, clean separation</span></div>
+    </div>
+  </div>
+</section>
+
+<hr />
+
+<!-- How it works -->
+<section>
+  <div class="container">
+    <div style="text-align:center; margin-bottom: 48px;">
+      <div class="section-label">How it works</div>
+      <h2>From install to coding in 3 steps</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Deploy the server</h3>
+        <p>Run <code style="font-family:var(--mono);font-size:12px;color:var(--blue)">docker compose up</code> on any VPS. Server starts on port 3000 with the browser IDE bundled in.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Add your API key</h3>
+        <p>Open <code style="font-family:var(--mono);font-size:12px;color:var(--blue)">/admin</code>, add an OpenRouter or Anthropic key once. Your whole team shares it.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Pair CLI to web</h3>
+        <p>Run <code style="font-family:var(--mono);font-size:12px;color:var(--blue)">cheap web</code>. A 6-digit code appears. Type it in the browser. Paired.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <h3>Start building</h3>
+        <p>Use <code style="font-family:var(--mono);font-size:12px;color:var(--blue)">cheap</code> in any directory. The AI reads, writes, and runs code. Memory persists.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr />
+
+<!-- Install strip -->
+<section style="padding: 40px 24px;">
+  <div class="container">
+    <div class="install-strip">
+      <div>
+        <span style="color:var(--muted);font-size:13px;">Install the CLI</span><br/>
+        <code>npm install -g cheap-ai</code>
+      </div>
+      <button class="copy-btn" onclick="copyInstall(this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Copy
+      </button>
+    </div>
+  </div>
+</section>
+
+<hr />
+
+<!-- Features -->
+<section id="features">
+  <div class="container">
+    <div style="text-align:center; margin-bottom: 48px;">
+      <div class="section-label">Features</div>
+      <h2>Everything you need. Nothing you don't.</h2>
+      <p class="section-sub">Built for developers who want real control over their AI toolchain.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+        </div>
+        <h3>CLI-First Agent</h3>
+        <p>Run <code style="font-family:var(--mono);font-size:12px;color:var(--blue)">cheap</code> in any directory. The AI reads files, writes code, runs shell commands, and remembers your project.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/>
+          </svg>
+        </div>
+        <h3>Browser IDE</h3>
+        <p>Monaco editor, file tree, real PTY terminal over WebSocket, AI chat — all in the browser. No extensions needed.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/>
+            <line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+          </svg>
+        </div>
+        <h3>Self-Hosted</h3>
+        <p>Your VPS, your data. One <code style="font-family:var(--mono);font-size:12px;color:var(--blue)">docker compose up</code> and you're running. No telemetry. No SaaS fees.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+          </svg>
+        </div>
+        <h3>Persistent Memory</h3>
+        <p>The AI remembers your architecture, preferences, and past decisions in SQLite. Memory survives across every session.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        <h3>Any AI Model</h3>
+        <p>OpenRouter, OpenAI, Anthropic, Gemini, Ollama, or any OpenAI-compatible endpoint. Switch providers without changing code.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h3>Admin Panel</h3>
+        <p>Configure providers, manage users, set per-user rate limits, generate invite links, view usage stats — all in <code style="font-family:var(--mono);font-size:12px;color:var(--blue)">/admin</code>.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <h3>Team Mode</h3>
+        <p>One server, multiple users. 6-digit pairing code links CLI to web. Invite links with role assignment.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+        </div>
+        <h3>Docker Deployments</h3>
+        <p>Deploy any project to a Docker container from the browser IDE. Live URL assigned automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+          </svg>
+        </div>
+        <h3>Real AI Tools</h3>
+        <p>read_file, write_file, run_command, search_files, list_directory — the AI executes real actions, not simulations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr />
+
+<!-- BYOK / providers -->
+<section>
+  <div class="container">
+    <div class="split">
+      <div class="split-text">
+        <div class="section-label">Multi-Provider</div>
+        <h2>Your keys. Any model.</h2>
+        <p>Configure any AI provider once in the admin panel. Your entire team shares one key — no per-user key management, no leaking credentials.</p>
+        <ul class="check-list">
+          <li>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            OpenAI — GPT-4o, o1, o3
+          </li>
+          <li>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Anthropic — Claude Sonnet, Haiku, Opus
+          </li>
+          <li>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Google Gemini — 2.0 Flash, Pro
+          </li>
+          <li>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            OpenRouter — 300+ models via one key
+          </li>
+          <li>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Ollama — run local models on your server
+          </li>
+          <li>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Any OpenAI-compatible API endpoint
+          </li>
+        </ul>
+      </div>
+      <div class="provider-card">
+        <div class="provider-label">Admin › AI Providers</div>
+        <div class="provider-row">
+          <div>
+            <div class="provider-name">Anthropic Direct</div>
+            <div class="provider-type">anthropic</div>
+          </div>
+          <span class="tag tag-blue">default</span>
+        </div>
+        <div class="provider-row">
+          <div>
+            <div class="provider-name">OpenAI GPT-4o</div>
+            <div class="provider-type">openai</div>
+          </div>
+          <span class="tag tag-green">enabled</span>
+        </div>
+        <div class="provider-row">
+          <div>
+            <div class="provider-name">Gemini 2.0 Flash</div>
+            <div class="provider-type">gemini</div>
+          </div>
+          <span class="tag tag-green">enabled</span>
+        </div>
+        <div class="provider-row">
+          <div>
+            <div class="provider-name">OpenRouter</div>
+            <div class="provider-type">openrouter · 300+ models</div>
+          </div>
+          <span class="tag tag-green">enabled</span>
+        </div>
+        <div class="provider-row">
+          <div>
+            <div class="provider-name">Ollama Local</div>
+            <div class="provider-type">ollama · localhost:11434</div>
+          </div>
+          <span class="tag tag-green">enabled</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr />
+
+<!-- Team -->
+<section>
+  <div class="container">
+    <div style="text-align:center; margin-bottom:48px;">
+      <div class="section-label">Team Features</div>
+      <h2>One server. Your whole team.</h2>
+      <p class="section-sub">Deploy once, invite everyone. Per-user rate limits keep costs under control.</p>
+    </div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <h3>Invite Links</h3>
+        <p>Generate one-time or limited-use invite links with role pre-assigned. Share with teammates.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h3>Role-Based Access</h3>
+        <p>Member, Admin, Super Admin. Admins configure providers. Super admins manage other admins.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+        </div>
+        <h3>6-Digit Pairing</h3>
+        <p>Run <code style="font-family:var(--mono);font-size:12px;color:var(--blue)">cheap web</code>. Get a code. Type it in the browser. CLI pairs to web with no password.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+        </div>
+        <h3>Rate Limits</h3>
+        <p>Set per-user hourly and daily message limits from the admin panel. Budget AI usage per person.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr />
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <h2>Ready to own your AI stack?</h2>
+    <p>Deploy to your VPS in under 5 minutes. Open source. Free forever.</p>
+    <div class="cta-btns">
+      <a href="https://github.com/3289david/cheap-ai#quick-start" target="_blank" rel="noopener" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+        Get started
+      </a>
+      <a href="https://github.com/3289david/cheap-ai" target="_blank" rel="noopener" class="btn btn-ghost">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        Star on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+      cheap-ai
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/3289david/cheap-ai" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/3289david/cheap-ai#readme" target="_blank" rel="noopener">Docs</a>
+      <a href="https://www.npmjs.com/package/cheap-ai" target="_blank" rel="noopener">npm</a>
+    </div>
+    <div class="footer-copy">MIT License</div>
+  </div>
+</footer>
+
+<script>
+  function copyInstall(btn) {
+    navigator.clipboard.writeText('npm install -g cheap-ai').then(() => {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+      btn.style.color = '#3fb950';
+      btn.style.borderColor = '#3fb950';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+    });
+  }
+</script>
+</body>
+</html>

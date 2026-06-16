@@ -139,4 +139,4 @@ export interface FileListResponse { type: 'file' | 'directory'; path: string; co
 export interface SearchResult { file: string; line: number; content: string; }
 export interface MemoryItem { id: number; category: string; content: string; created_at: string; }
 export interface Deployment { id: string; project_id: string; status: string; type: string; url?: string; port?: number; created_at: string; }
-export interface ServerInfo { version: string; siteName: string; hasApiKey: boolean; defaultModel: string; providers: Array<{ id: string; name: string; type: string; models: string[] }>; registrationEnabled: boolean; requireInvite: boolean; }
+export interface ServerInfo { version: string; siteName: string; hasApiKey: boolean; defaultModel: string; providers: Array<{ id: string; name: string; type: string; models: string[] }>; registrationEnabled: boolean; requireInvite: boolean; networkUrl?: string; localUrl?: string; }

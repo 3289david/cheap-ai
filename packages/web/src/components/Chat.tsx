@@ -13,6 +13,7 @@ export default function Chat() {
     conversations, activeConversationId,
     addMessage, updateMessage, clearConversation,
     selectedModel, setSelectedModel,
+    selectedProviderId,
     isAgentThinking, setAgentThinking,
     agentStreamingText, appendStreamingText, clearStreamingText,
   } = useStore();
@@ -114,6 +115,7 @@ export default function Chat() {
       conversationId: activeConversationId,
       message: text,
       model: selectedModel,
+      providerId: selectedProviderId,
     });
   }
 

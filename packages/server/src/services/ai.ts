@@ -231,10 +231,11 @@ async function runAnthropicAgent(opts: StreamOptions): Promise<OpenAI.ChatComple
       }
 
       anthropicMessages.push({ role: 'user', content: toolResults });
-      break;
+      // continue the loop to let Claude respond after seeing tool results
+      continue;
     }
 
-    break;
+    break; // stop_reason was something unexpected
   }
 
   return allMessages;

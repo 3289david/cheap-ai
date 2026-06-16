@@ -8,11 +8,15 @@ const router = Router();
 const PROJECTS_DIR = process.env.PROJECTS_DIR || path.join(process.env.HOME || '/root', '.cheap-ai', 'projects');
 
 router.get('/', (req, res) => {
-  const projects = getDb().prepare('SELECT * FROM projects ORDER BY updated_at DESC').all();
+  const user = (req as import('express').Request & { user?: { id: string } }).user;
+  const projects = getDb().prepare(
+    'SELECT * FROM projects WHERE user_id = ? ORDER BY updated_at DESC'
+  ).all(user?.id || 'default');
   res.json(projects);
 });
 
 router.post('/', (req, res) => {
+  const user = (req as import('express').Request & { user?: { id: string } }).user;
   const { name, description, language, framework, path: customPath } = req.body as {
     name: string; description?: string; language?: string; framework?: string; path?: string;
   };
@@ -26,7 +30,7 @@ router.post('/', (req, res) => {
   getDb().prepare(`
     INSERT INTO projects (id, user_id, name, description, language, framework, path)
     VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(id, 'default', name, description || null, language || null, framework || null, projectPath);
+  `).run(id, user?.id || 'default', name, description || null, language || null, framework || null, projectPath);
 
   res.json({ id, name, path: projectPath });
 });
@@ -63,6 +67,7 @@ router.delete('/:id', (req, res) => {
 
 // Import existing project (by path)
 router.post('/import', (req, res) => {
+  const user = (req as import('express').Request & { user?: { id: string } }).user;
   const { projectPath, name } = req.body as { projectPath: string; name?: string };
   if (!projectPath) { res.status(400).json({ error: 'path required' }); return; }
   if (!fs.existsSync(projectPath)) { res.status(400).json({ error: 'path does not exist' }); return; }
@@ -72,7 +77,7 @@ router.post('/import', (req, res) => {
 
   getDb().prepare(`
     INSERT OR IGNORE INTO projects (id, user_id, name, path) VALUES (?, ?, ?, ?)
-  `).run(id, 'default', projectName, path.resolve(projectPath));
+  `).run(id, user?.id || 'default', projectName, path.resolve(projectPath));
 
   res.json({ id, name: projectName, path: projectPath });
 });
