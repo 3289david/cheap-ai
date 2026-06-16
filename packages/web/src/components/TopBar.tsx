@@ -78,6 +78,17 @@ export default function TopBar({ onSetup }: Props) {
         <Settings size={15} />
       </button>
 
+      {isAdmin && (
+        <Link
+          to="/admin"
+          className="flex items-center gap-1 px-2 py-1 rounded hover:bg-bg-hover transition-colors text-text-secondary hover:text-accent-blue text-xs"
+          title="Admin Panel"
+        >
+          <Shield size={14} />
+          <span className="hidden sm:inline">Admin</span>
+        </Link>
+      )}
+
       {/* User menu */}
       <div className="relative ml-1">
         <button
