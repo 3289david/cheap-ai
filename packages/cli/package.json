@@ -3,22 +3,30 @@
   "version": "0.1.0",
   "description": "CLI-first AI coding agent + browser IDE + Docker hosting. Runs on your own VPS.",
   "keywords": [
-    "ai", "coding-agent", "cli", "ide", "openrouter", "claude", "gpt",
-    "developer-tools", "vps", "self-hosted"
+    "ai",
+    "coding-agent",
+    "cli",
+    "ide",
+    "openrouter",
+    "claude",
+    "gpt",
+    "developer-tools",
+    "vps",
+    "self-hosted"
   ],
-  "author": "danwoo1234",
+  "author": "3289david",
   "license": "MIT",
-  "homepage": "https://github.com/danwoo1234/cheap-ai#readme",
+  "homepage": "https://github.com/3289david/cheap-ai#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/danwoo1234/cheap-ai.git"
+    "url": "git+https://github.com/3289david/cheap-ai.git"
   },
   "bugs": {
-    "url": "https://github.com/danwoo1234/cheap-ai/issues"
+    "url": "https://github.com/3289david/cheap-ai/issues"
   },
   "bin": {
-    "cheap": "./dist/index.js",
-    "cheap-ai": "./dist/index.js"
+    "cheap": "dist/index.js",
+    "cheap-ai": "dist/index.js"
   },
   "main": "./dist/index.js",
   "files": [

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 
-const GITHUB_URL = 'https://github.com/your-org/cheap-ai';
+const GITHUB_URL = 'https://github.com/3289david/cheap-ai';
 
 function IconTerminal() {
   return (
