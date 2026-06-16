@@ -73,6 +73,7 @@ async function doPairing(serverUrl: string, opts: { open?: boolean } = {}): Prom
       body: JSON.stringify({
         projectPath: process.cwd(),
         projectName: path.basename(process.cwd()),
+        token: config.serverToken, // reuse same user account on re-pair
       }),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -507,6 +508,46 @@ program
       });
     });
     console.log();
+  });
+
+// ─── Recover admin access ─────────────────────────────────────────────────────
+program
+  .command('recover')
+  .description('Generate an admin recovery code (run on the server machine)')
+  .option('-s, --server <url>', 'Server URL')
+  .action(async (opts) => {
+    const config = loadConfig();
+    const serverUrl = normalizeUrl(opts.server || config.serverUrl || process.env.SERVER_URL || 'http://localhost:3000');
+
+    console.log(chalk.bold.cyan('\n  cheap-ai  Admin Recovery\n'));
+
+    try {
+      const res = await fetch(`${serverUrl}/api/pair/recovery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json() as { recoveryCode?: string; expiresIn?: number; error?: string; message?: string };
+
+      if (!res.ok) {
+        console.error(chalk.red(`\n  Error: ${data.error}`));
+        console.log(chalk.gray('  This command must be run on the server machine (localhost).'));
+        console.log(chalk.gray('  Or run it when no admin accounts exist.\n'));
+        process.exit(1);
+      }
+
+      console.log(chalk.bold('  Recovery code:\n'));
+      console.log(chalk.bold.white('  ┌─────────────────┐'));
+      console.log(chalk.bold.white('  │   ') + chalk.bold.yellow(data.recoveryCode!.split('').join('  ')) + chalk.bold.white('   │'));
+      console.log(chalk.bold.white('  └─────────────────┘'));
+      console.log();
+      console.log(chalk.gray(`  1. Open ${chalk.cyan(serverUrl + '/login')} in your browser`));
+      console.log(chalk.gray('  2. Enter the recovery code above'));
+      console.log(chalk.gray('  3. You will be made super_admin'));
+      console.log(chalk.gray(`  4. Expires in ${Math.round((data.expiresIn || 300) / 60)} minutes\n`));
+    } catch {
+      console.error(chalk.red(`\n  Cannot reach server at ${serverUrl}\n`));
+      process.exit(1);
+    }
   });
 
 // ─── Logout ───────────────────────────────────────────────────────────────────

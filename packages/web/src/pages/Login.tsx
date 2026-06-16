@@ -67,33 +67,36 @@ export default function Pair({ register: _unused }: { register?: boolean }) {
   async function submitCode(code: string) {
     setLoading(true);
     setError('');
-    try {
-      const res = await fetch(`${useStore.getState().apiUrl}/api/pair/confirm/${code}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const data = await res.json() as {
-        token?: string;
-        user?: Parameters<typeof setAuth>[1];
-        error?: string;
-        projectPath?: string;
-        projectName?: string;
-      };
+    const apiUrl = useStore.getState().apiUrl;
 
-      if (!res.ok || !data.token) {
-        setError(data.error || 'Invalid code');
-        setDigits(['', '', '', '', '', '']);
-        setTimeout(() => refs.current[0]?.focus(), 50);
-        setLoading(false);
-        return;
-      }
+    // Try normal pair confirm first, then recovery confirm
+    for (const endpoint of [
+      `${apiUrl}/api/pair/confirm/${code}`,
+      `${apiUrl}/api/pair/recovery/confirm/${code}`,
+    ]) {
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await res.json() as {
+          token?: string;
+          user?: Parameters<typeof setAuth>[1];
+          error?: string;
+        };
 
-      setAuth(data.token, data.user!);
-      navigate('/app', { replace: true });
-    } catch {
-      setError('Connection failed — is the server running?');
-      setLoading(false);
+        if (res.ok && data.token) {
+          setAuth(data.token, data.user!);
+          navigate('/app', { replace: true });
+          return;
+        }
+      } catch {}
     }
+
+    setError('Invalid or expired code');
+    setDigits(['', '', '', '', '', '']);
+    setTimeout(() => refs.current[0]?.focus(), 50);
+    setLoading(false);
   }
 
   return (

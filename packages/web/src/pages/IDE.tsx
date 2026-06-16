@@ -14,13 +14,20 @@ export default function IDE() {
   const {
     showSidebar, showChat, showTerminal,
     activeProjectId, apiUrl, token,
-    setProjects, setActiveProject,
+    setProjects, setActiveProject, setAuth,
   } = useStore();
 
   const [serverOk, setServerOk] = useState<boolean | null>(null);
   const [showSetup, setShowSetup] = useState(false);
 
   useEffect(() => {
+    // Always refresh user from server on mount — fixes stale/null role in store
+    if (token) {
+      api.auth.me()
+        .then(me => setAuth(token, { id: me.id, email: me.email, username: me.username, role: me.role as 'super_admin' | 'admin' | 'member', plan: me.plan }))
+        .catch(() => {});
+    }
+
     api.health()
       .then(() => {
         setServerOk(true);
