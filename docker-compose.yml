@@ -1,0 +1,49 @@
+version: '3.9'
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.server
+    container_name: cheap-ai-server
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - cheap-ai-data:/var/cheap-ai
+      - /var/run/docker.sock:/var/run/docker.sock  # for deploying projects
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-anthropic/claude-sonnet-4-5}
+      - BASE_DOMAIN=${BASE_DOMAIN:-localhost}
+      - JWT_SECRET=${JWT_SECRET:-changeme}
+      - PROJECTS_DIR=/var/cheap-ai/projects
+      - DB_PATH=/var/cheap-ai/server.db
+      - SITE_URL=${SITE_URL:-http://localhost:3000}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cheap-ai.rule=Host(`${BASE_DOMAIN}`)"
+      - "traefik.http.routers.cheap-ai.tls=true"
+      - "traefik.http.routers.cheap-ai.tls.certresolver=letsencrypt"
+
+  nginx:
+    image: nginx:alpine
+    container_name: cheap-ai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - cheap-ai-certs:/etc/nginx/certs
+      - cheap-ai-nginx-log:/var/log/nginx
+    depends_on:
+      - server
+
+volumes:
+  cheap-ai-data:
+  cheap-ai-certs:
+  cheap-ai-nginx-log:

@@ -1,0 +1,19 @@
+{
+  "name": "cheap-ai",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI Cloud IDE + Agent + Hosting — CLI-first",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev:server": "pnpm --filter server dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:cli": "pnpm --filter cli dev",
+    "start": "pnpm --filter server start",
+    "cli": "pnpm --filter cli start"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

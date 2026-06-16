@@ -1,0 +1,48 @@
+FROM node:20-alpine AS base
+RUN apk add --no-cache python3 make g++ git
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Copy workspace config
+COPY package.json pnpm-workspace.yaml ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/server/package.json ./packages/server/
+COPY packages/web/package.json ./packages/web/
+COPY packages/cli/package.json ./packages/cli/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source
+COPY packages/shared ./packages/shared
+COPY packages/server ./packages/server
+COPY packages/web ./packages/web
+COPY packages/cli ./packages/cli
+
+# Build
+RUN pnpm --filter @cheap-ai/shared build 2>/dev/null || true
+RUN pnpm --filter @cheap-ai/server build
+RUN pnpm --filter @cheap-ai/web build
+
+# Production stage
+FROM node:20-alpine
+RUN apk add --no-cache bash docker-cli git curl
+
+WORKDIR /app
+
+COPY --from=base /app/packages/server/dist ./packages/server/dist
+COPY --from=base /app/packages/server/node_modules ./packages/server/node_modules
+COPY --from=base /app/packages/web/dist ./packages/web/dist
+COPY --from=base /app/node_modules ./node_modules
+
+EXPOSE 3000
+
+ENV NODE_ENV=production
+ENV PROJECTS_DIR=/var/cheap-ai/projects
+
+RUN mkdir -p /var/cheap-ai/projects
+
+CMD ["node", "packages/server/dist/index.js"]

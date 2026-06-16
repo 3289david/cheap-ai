@@ -1,0 +1,64 @@
+{
+  "name": "cheap-ai",
+  "version": "0.1.0",
+  "description": "CLI-first AI coding agent + browser IDE + Docker hosting. Runs on your own VPS.",
+  "keywords": [
+    "ai", "coding-agent", "cli", "ide", "openrouter", "claude", "gpt",
+    "developer-tools", "vps", "self-hosted"
+  ],
+  "author": "danwoo1234",
+  "license": "MIT",
+  "homepage": "https://github.com/danwoo1234/cheap-ai#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danwoo1234/cheap-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/danwoo1234/cheap-ai/issues"
+  },
+  "bin": {
+    "cheap": "./dist/index.js",
+    "cheap-ai": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "prepublishOnly": "pnpm build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "glob": "^11.0.0",
+    "node-pty": "^1.0.0",
+    "ora": "^8.0.1",
+    "openai": "^4.47.0",
+    "boxen": "^8.0.1",
+    "figures": "^6.1.0",
+    "strip-ansi": "^7.1.0",
+    "wrap-ansi": "^9.0.0",
+    "cli-highlight": "^2.1.11",
+    "chokidar": "^3.6.0",
+    "inquirer": "^10.1.2",
+    "gradient-string": "^2.0.2",
+    "terminal-link": "^3.0.0",
+    "string-width": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.10",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.11.0",
+    "typescript": "^5.4.0"
+  }
+}
